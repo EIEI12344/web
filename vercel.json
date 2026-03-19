@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/artifacts/mockup-sandbox/index.html"
+    },
+    {
+      "source": "/login",
+      "destination": "/artifacts/mockup-sandbox/index.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/artifacts/license-manager/index.html"
+    }
+  ]
+}
