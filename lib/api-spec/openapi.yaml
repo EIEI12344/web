@@ -1,0 +1,746 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: License Manager API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication
+  - name: admin
+    description: Super Admin operations
+  - name: user
+    description: Reseller User operations
+  - name: apps
+    description: App management
+  - name: licenses
+    description: License management
+  - name: client
+    description: Client API (external license check)
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login (user or admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user account with a master license key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Registration success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout current session
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # SUPER ADMIN ENDPOINTS
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: Global stats (total users, apps, licenses)
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
+  /admin/master-licenses:
+    get:
+      operationId: listMasterLicenses
+      tags: [admin]
+      summary: List all master license keys
+      responses:
+        "200":
+          description: Master licenses list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MasterLicense"
+    post:
+      operationId: generateMasterLicense
+      tags: [admin]
+      summary: Generate a new master license key
+      responses:
+        "201":
+          description: Generated key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MasterLicense"
+
+  /admin/users:
+    get:
+      operationId: listUsers
+      tags: [admin]
+      summary: List all user accounts
+      responses:
+        "200":
+          description: Users list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserAccount"
+
+  /admin/users/{userId}/ban:
+    post:
+      operationId: banUser
+      tags: [admin]
+      summary: Ban a user account
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Banned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/users/{userId}/unban:
+    post:
+      operationId: unbanUser
+      tags: [admin]
+      summary: Unban a user account
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Unbanned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/alerts:
+    get:
+      operationId: listAlerts
+      tags: [admin]
+      summary: List unauthorized access alerts
+      responses:
+        "200":
+          description: Alerts list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SecurityAlert"
+
+  # USER (RESELLER) ENDPOINTS
+  /apps:
+    get:
+      operationId: listApps
+      tags: [apps]
+      summary: List all apps for the current user
+      responses:
+        "200":
+          description: Apps list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/App"
+    post:
+      operationId: createApp
+      tags: [apps]
+      summary: Create a new App
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAppRequest"
+      responses:
+        "201":
+          description: Created app
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/App"
+
+  /apps/{appId}:
+    get:
+      operationId: getApp
+      tags: [apps]
+      summary: Get app details
+      parameters:
+        - name: appId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: App details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/App"
+
+  /apps/{appId}/licenses:
+    get:
+      operationId: listAppLicenses
+      tags: [licenses]
+      summary: List all licenses for an app
+      parameters:
+        - name: appId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Licenses list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AppLicense"
+    post:
+      operationId: generateAppLicense
+      tags: [licenses]
+      summary: Generate a new license for an app
+      parameters:
+        - name: appId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateLicenseRequest"
+      responses:
+        "201":
+          description: Generated license
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppLicense"
+
+  /apps/{appId}/licenses/{licenseId}/ban:
+    post:
+      operationId: banLicense
+      tags: [licenses]
+      summary: Ban a license key
+      parameters:
+        - name: appId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: licenseId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Banned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /apps/{appId}/licenses/{licenseId}/unban:
+    post:
+      operationId: unbanLicense
+      tags: [licenses]
+      summary: Unban a license key
+      parameters:
+        - name: appId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: licenseId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Unbanned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # CLIENT API
+  /check:
+    get:
+      operationId: checkLicense
+      tags: [client]
+      summary: Validate a license key (client API)
+      parameters:
+        - name: ownerid
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: username
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: license
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: hwid
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: appid
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: License check result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LicenseCheckResponse"
+
+  /heartbeat:
+    post:
+      operationId: heartbeat
+      tags: [client]
+      summary: License heartbeat (keeps session alive)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HeartbeatRequest"
+      responses:
+        "200":
+          description: Heartbeat acknowledged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LicenseCheckResponse"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required:
+        - username
+        - password
+
+    RegisterRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        masterLicenseKey:
+          type: string
+      required:
+        - username
+        - password
+        - masterLicenseKey
+
+    LoginResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/UserProfile"
+        token:
+          type: string
+      required:
+        - user
+        - token
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        ownerId:
+          type: string
+        role:
+          type: string
+          enum: [admin, user]
+        banned:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - username
+        - ownerId
+        - role
+        - banned
+        - createdAt
+
+    UserAccount:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        ownerId:
+          type: string
+        role:
+          type: string
+        banned:
+          type: boolean
+        appCount:
+          type: integer
+        licenseCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - username
+        - ownerId
+        - role
+        - banned
+        - appCount
+        - licenseCount
+        - createdAt
+
+    AdminStats:
+      type: object
+      properties:
+        totalUsers:
+          type: integer
+        totalApps:
+          type: integer
+        totalLicenses:
+          type: integer
+        activeLicenses:
+          type: integer
+        totalMasterLicenses:
+          type: integer
+        usedMasterLicenses:
+          type: integer
+      required:
+        - totalUsers
+        - totalApps
+        - totalLicenses
+        - activeLicenses
+        - totalMasterLicenses
+        - usedMasterLicenses
+
+    MasterLicense:
+      type: object
+      properties:
+        id:
+          type: string
+        key:
+          type: string
+        used:
+          type: boolean
+        usedBy:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - key
+        - used
+        - createdAt
+
+    SecurityAlert:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        message:
+          type: string
+        ownerid:
+          type: string
+        appId:
+          type: string
+        licenseKey:
+          type: string
+          nullable: true
+        hwid:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - type
+        - message
+        - ownerid
+        - appId
+        - createdAt
+
+    App:
+      type: object
+      properties:
+        id:
+          type: string
+        appId:
+          type: string
+        name:
+          type: string
+        ownerId:
+          type: string
+        licenseCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - appId
+        - name
+        - ownerId
+        - licenseCount
+        - createdAt
+
+    CreateAppRequest:
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+        - name
+
+    AppLicense:
+      type: object
+      properties:
+        id:
+          type: string
+        licenseKey:
+          type: string
+        appId:
+          type: string
+        duration:
+          type: string
+          enum: [1day, 30days, lifetime]
+        username:
+          type: string
+          nullable: true
+        hwid:
+          type: string
+          nullable: true
+        ownerId:
+          type: string
+        banned:
+          type: boolean
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastLogin:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - licenseKey
+        - appId
+        - duration
+        - ownerId
+        - banned
+        - createdAt
+
+    GenerateLicenseRequest:
+      type: object
+      properties:
+        duration:
+          type: string
+          enum: [1day, 30days, lifetime]
+      required:
+        - duration
+
+    LicenseCheckResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        username:
+          type: string
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+        - success
+        - message
+
+    HeartbeatRequest:
+      type: object
+      properties:
+        ownerid:
+          type: string
+        username:
+          type: string
+        license:
+          type: string
+        hwid:
+          type: string
+        appid:
+          type: string
+      required:
+        - ownerid
+        - username
+        - license
+        - hwid
+        - appid
