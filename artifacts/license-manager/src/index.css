@@ -1,0 +1,130 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap');
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: 'Inter', sans-serif;
+  --font-display: 'Outfit', sans-serif;
+
+  /* STUNNING DARK MODE COLORS */
+  --color-background: hsl(240 10% 4%);
+  --color-foreground: hsl(0 0% 98%);
+  
+  --color-card: hsl(240 10% 6%);
+  --color-card-foreground: hsl(0 0% 98%);
+  --color-card-border: hsl(240 10% 12%);
+
+  --color-popover: hsl(240 10% 6%);
+  --color-popover-foreground: hsl(0 0% 98%);
+  --color-popover-border: hsl(240 10% 12%);
+
+  --color-primary: hsl(255 90% 65%);
+  --color-primary-foreground: hsl(0 0% 100%);
+  --color-primary-border: hsl(255 90% 55%);
+
+  --color-secondary: hsl(240 10% 12%);
+  --color-secondary-foreground: hsl(0 0% 98%);
+  --color-secondary-border: hsl(240 10% 16%);
+
+  --color-muted: hsl(240 10% 10%);
+  --color-muted-foreground: hsl(240 5% 65%);
+  --color-muted-border: hsl(240 10% 16%);
+
+  --color-accent: hsl(280 90% 65%);
+  --color-accent-foreground: hsl(0 0% 100%);
+  --color-accent-border: hsl(280 90% 55%);
+
+  --color-destructive: hsl(0 85% 60%);
+  --color-destructive-foreground: hsl(0 0% 98%);
+  --color-destructive-border: hsl(0 85% 50%);
+
+  --color-border: hsl(240 10% 14%);
+  --color-input: hsl(240 10% 12%);
+  --color-ring: hsl(255 90% 65%);
+
+  --color-chart-1: hsl(255 90% 65%);
+  --color-chart-2: hsl(280 90% 65%);
+  --color-chart-3: hsl(190 90% 60%);
+  --color-chart-4: hsl(320 85% 60%);
+  --color-chart-5: hsl(160 80% 55%);
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 0.9375rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    background-color: var(--color-background);
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground selection:bg-primary/30 selection:text-primary-foreground min-h-screen;
+    background-image: radial-gradient(circle at 50% 0%, hsl(255 90% 65% / 0.05) 0%, transparent 70%);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    @apply tracking-tight;
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    @apply bg-card/60 backdrop-blur-xl border border-white/5 shadow-2xl shadow-black/40;
+  }
+  
+  .glass-panel {
+    @apply bg-secondary/40 backdrop-blur-md border border-white/5;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-blue-500;
+  }
+
+  .animate-in-fade {
+    animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-in-slide {
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+/* Custom Scrollbar for sleek dark mode */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(240 10% 4%); 
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(240 10% 16%); 
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(240 10% 24%); 
+}

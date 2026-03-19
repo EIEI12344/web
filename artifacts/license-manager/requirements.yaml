@@ -1,0 +1,22 @@
+packages:
+  "framer-motion": "Smooth page transitions and micro-interactions"
+  "recharts": "Beautiful charts for the admin dashboard statistics"
+  "date-fns": "Easy date formatting for license creation and expiration dates"
+  "react-hook-form": "Robust form state management"
+  "@hookform/resolvers": "Zod resolver for forms"
+  "clsx": "Utility for conditionally joining classNames"
+  "tailwind-merge": "Utility to merge tailwind classes without style conflicts"
+  "lucide-react": "Beautiful consistent icons"
+
+images:
+  - path: "artifacts/license-manager/public/images/auth-bg.png"
+    description: "Abstract gradient mesh background in deep dark violet, indigo, and black with very subtle light leaks, high-end professional dark mode aesthetic"
+    aspect_ratio: "16:9"
+  - path: "artifacts/license-manager/public/images/logo.png"
+    description: "Minimalist modern geometric shield and key logo mark, glowing electric blue and purple, on transparent background, high tech aesthetic"
+    aspect_ratio: "1:1"
+
+notes:
+  - Using a fetch interceptor to append JWT tokens to the Authorization header automatically for all API calls
+  - Hooking into Orval generated React Query hooks from @workspace/api-client-react
+  - Dark mode professional aesthetic enforced globally
