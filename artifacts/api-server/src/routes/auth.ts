@@ -1,5 +1,5 @@
-import { Router } from "express";
-import { db, usersTable } from "@workspace/db";
+import { Router, type Request, type Response } from "express";
+import { db, usersTable, masterLicensesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import {
   signToken,
@@ -8,12 +8,15 @@ import {
   generateOwnerId,
   requireAuth,
 } from "../lib/auth.js";
-import { masterLicensesTable } from "@workspace/db";
 import { LoginBody, RegisterBody } from "@workspace/api-zod";
 
 const router = Router();
 
-router.post("/login", async (req, res) => {
+/**
+ * @route   POST /auth/login
+ * @desc    Authenticate user and return token
+ */
+router.post("/login", async (req: Request, res: Response) => {
   try {
     const parsed = LoginBody.safeParse(req.body);
     if (!parsed.success) {
@@ -23,14 +26,12 @@ router.post("/login", async (req, res) => {
     const { username, password } = parsed.data;
 
     const [user] = await db.select().from(usersTable).where(eq(usersTable.username, username));
-    if (!user) {
+    
+    if (!user || !comparePassword(password, user.passwordHash)) {
       res.status(401).json({ error: "Unauthorized", message: "Invalid credentials" });
       return;
     }
-    if (!comparePassword(password, user.passwordHash)) {
-      res.status(401).json({ error: "Unauthorized", message: "Invalid credentials" });
-      return;
-    }
+    
     if (user.banned) {
       res.status(401).json({ error: "Unauthorized", message: "Account is banned" });
       return;
@@ -60,7 +61,11 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.post("/register", async (req, res) => {
+/**
+ * @route   POST /auth/register
+ * @desc    Register a new user using a master license key
+ */
+router.post("/register", async (req: Request, res: Response) => {
   try {
     const parsed = RegisterBody.safeParse(req.body);
     if (!parsed.success) {
@@ -69,6 +74,7 @@ router.post("/register", async (req, res) => {
     }
     const { username, password, masterLicenseKey } = parsed.data;
 
+    // Check License Key
     const [masterLicense] = await db
       .select()
       .from(masterLicensesTable)
@@ -79,6 +85,7 @@ router.post("/register", async (req, res) => {
       return;
     }
 
+    // Check Username Availability
     const existing = await db.select().from(usersTable).where(eq(usersTable.username, username));
     if (existing.length > 0) {
       res.status(400).json({ error: "Bad Request", message: "Username already taken" });
@@ -97,6 +104,7 @@ router.post("/register", async (req, res) => {
       })
       .returning();
 
+    // Mark License as Used
     await db
       .update(masterLicensesTable)
       .set({ used: true, usedBy: username })
@@ -126,18 +134,27 @@ router.post("/register", async (req, res) => {
   }
 });
 
-router.post("/logout", (_req, res) => {
+/**
+ * @route   POST /auth/logout
+ */
+router.post("/logout", (_req: Request, res: Response) => {
   res.json({ success: true, message: "Logged out" });
 });
 
-router.get("/me", requireAuth, async (req, res) => {
+/**
+ * @route   GET /auth/me
+ * @desc    Get current authenticated user info
+ */
+router.get("/me", requireAuth, async (req: Request, res: Response) => {
   try {
     const { userId } = (req as any).user;
     const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+    
     if (!user) {
       res.status(404).json({ error: "Not Found", message: "User not found" });
       return;
     }
+    
     res.json({
       id: user.id,
       username: user.username,
