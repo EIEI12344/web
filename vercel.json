@@ -1,16 +1,26 @@
 {
+  "version": 2,
   "rewrites": [
     {
       "source": "/",
-      "destination": "/artifacts/mockup-sandbox/index.html"
+      "destination": "/index.html"
     },
     {
       "source": "/login",
-      "destination": "/artifacts/mockup-sandbox/index.html"
+      "destination": "/index.html"
     },
     {
       "source": "/admin",
-      "destination": "/artifacts/license-manager/index.html"
+      "destination": "/admin.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,OPTIONS,PATCH,DELETE,POST,PUT" }
+      ]
     }
   ]
 }
